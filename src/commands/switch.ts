@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 import ora from 'ora';
 import { ProjectManager } from '../services/project-manager';
+import { FzfWrapper } from '../fzf';
 
 function printCdCommand(projectPath: string): void {
   console.log(chalk.bold('\nTo switch to this project, run:'));
@@ -17,11 +18,37 @@ export async function switchCommand(
 ): Promise<void> {
   const spinner = ora();
   const manager = new ProjectManager();
+  const fzf = new FzfWrapper();
 
   try {
     if (options.fzf) {
-      // Fzf mode - handle in Part 5
-      spinner.warn(chalk.yellow('Fzf mode will be implemented in Part 5'));
+      // Fzf mode
+      spinner.start('Loading projects');
+
+      const projects = options.recent
+        ? await manager.getRecentProjects(50)
+        : await manager.getAllProjects();
+
+      spinner.stop();
+
+      if (projects.length === 0) {
+        console.log(chalk.yellow('No projects found.'));
+        console.log(chalk.dim('Add a project with: cps add [path]'));
+        return;
+      }
+
+      const selected = await fzf.selectProject(projects, {
+        prompt: 'Switch to project> ',
+        preview: 'echo {2}'
+      });
+
+      if (selected) {
+        await manager.recordAccess(selected.id);
+        console.log(chalk.green(`Selected: ${selected.name}`));
+        printCdCommand(selected.path);
+      } else {
+        console.log(chalk.dim('No project selected.'));
+      }
       return;
     }
 
