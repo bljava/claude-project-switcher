@@ -9,6 +9,7 @@ Fast, interactive project navigation for Claude Code users.
 - Tags & Groups: Organize projects with tags and groups
 - Auto-Discovery: Automatically detects Git repositories
 - Shell Integration: Native zsh and bash support
+- Claude Code Launcher: Fast project switching with automatic Claude Code startup
 
 ## Installation
 
@@ -27,33 +28,59 @@ cps-install
 
 ```bash
 # Add current directory as a project
-cps add
+command cps add
 
 # Add a project by path
-cps add ~/projects/my-app
+command cps add ~/projects/my-app
 
 # List all projects
-cps list
+command cps list
 
 # Switch to a project (interactive)
-cps switch --fzf
+command cps switch --fzf
 
 # Switch by name
-cps switch my-app
+command cps switch my-app
 
 # Show recent projects
-cps list --recent
+command cps list --recent
+
+# Use shell shortcuts (after running cps-install)
+cc           # Quick switch AND start Claude Code
+```
+
+## Shell Integration
+
+Run `cps-install` after installation to enable shell shortcuts:
+
+```bash
+cps-install
+# Restart your shell or run: source ~/.bashrc or source ~/.zshrc
+```
+
+### Shell Shortcuts
+
+| Shortcut | Description |
+|----------|-------------|
+| `cc` | Interactive project switch AND start Claude Code |
+
+The `cc` command is the fastest way to jump between projects and start working with Claude Code:
+
+```bash
+# Press cc, select your project, and Claude Code starts automatically
+cc
+# → fzf opens → select project → cd to project → claude . runs
 ```
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `cps add [path]` | Add a project |
-| `cps list` | List all projects |
-| `cps switch [name]` | Switch to a project |
-| `cps remove <name>` | Remove a project |
-| `cps scan [path]` | Scan directory for projects |
+| Command                     | Description |
+|-----------------------------|-------------|
+| `command cps add [path]`    | Add a project |
+| `command cps list`          | List all projects |
+| `command cps switch [name]` | Switch to a project |
+| `command cps remove <name>` | Remove a project |
+| `command cps scan [path]`   | Scan directory for projects |
 
 ## Requirements
 
