@@ -1,0 +1,11 @@
+src/
+tsconfig.json
+jest.config.js
+.github/
+docs/plans/
+*.test.ts
+__tests__/
+.DS_Store
+*.log
+coverage/
+.idea/
