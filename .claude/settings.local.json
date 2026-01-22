@@ -5,7 +5,8 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(npm run build:*)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(npm test)"
     ]
   }
 }
