@@ -13,6 +13,19 @@ cps() {
     fi
 }
 
+# Switch project AND start Claude Code
+cc() {
+    local result
+    result=$(command cps switch --fzf 2>/dev/null)
+
+    if [[ -n "$result" ]]; then
+        local path=$(echo "$result" | grep "cd " | sed 's/cd //')
+        if [[ -d "$path" ]]; then
+            cd "$path" && claude .
+        fi
+    fi
+}
+
 # Completion for cps command
 _cps_completion() {
     local -a commands
