@@ -38,6 +38,7 @@ program.command('switch [name]')
   .description('Switch to a project')
   .option('-f, --fzf', 'Use fzf for interactive selection')
   .option('-r, --recent', 'Show recent projects only')
+  .option('-c, --claude', 'Output pure cd command for shell integration (with Claude)')
   .action(async (name, options) => {
     const { switchCommand } = await import('./commands/switch');
     await switchCommand(name, options);

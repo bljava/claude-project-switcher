@@ -3,10 +3,15 @@ import ora from 'ora';
 import { ProjectManager } from '../services/project-manager';
 import { FzfWrapper } from '../fzf';
 
-function printCdCommand(projectPath: string): void {
-  console.log(chalk.bold('\nTo switch to this project, run:'));
-  console.log(chalk.cyan(`  cd ${projectPath}`));
-  console.log();
+function printCdCommand(projectPath: string, claudeMode = false): void {
+  if (claudeMode) {
+    // Pure output for shell function parsing
+    console.log(`cd ${projectPath}`);
+  } else {
+    console.log(chalk.bold('\nTo switch to this project, run:'));
+    console.log(chalk.cyan(`  cd ${projectPath}`));
+    console.log();
+  }
 }
 
 export async function switchCommand(
@@ -14,6 +19,7 @@ export async function switchCommand(
   options: {
     fzf?: boolean;
     recent?: boolean;
+    claude?: boolean;
   }
 ): Promise<void> {
   const spinner = ora();
@@ -44,8 +50,10 @@ export async function switchCommand(
 
       if (selected) {
         await manager.recordAccess(selected.id);
-        console.log(chalk.green(`Selected: ${selected.name}`));
-        printCdCommand(selected.path);
+        if (!options.claude) {
+          console.log(chalk.green(`Selected: ${selected.name}`));
+        }
+        printCdCommand(selected.path, options.claude);
       } else {
         console.log(chalk.dim('No project selected.'));
       }
@@ -64,7 +72,10 @@ export async function switchCommand(
 
       spinner.stop();
       await manager.recordAccess(project.id);
-      printCdCommand(project.path);
+      if (!options.claude) {
+        console.log(chalk.green(`Switched to: ${project.name}`));
+      }
+      printCdCommand(project.path, options.claude);
     } else {
       // No name provided - show recent projects
       spinner.start('Loading projects');

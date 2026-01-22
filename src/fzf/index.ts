@@ -1,4 +1,4 @@
-import { execSync } from 'child_process';
+import { spawn, spawnSync } from 'child_process';
 import { Project } from '../types';
 
 export interface FzfOptions {
@@ -16,14 +16,9 @@ export class FzfWrapper {
       return this.available;
     }
 
-    try {
-      execSync('which fzf', { stdio: 'ignore' });
-      this.available = true;
-      return true;
-    } catch {
-      this.available = false;
-      return false;
-    }
+    const result = spawnSync('which', ['fzf'], { stdio: 'ignore' });
+    this.available = result.status === 0;
+    return this.available;
   }
 
   async selectProject(projects: Project[], options: FzfOptions = {}): Promise<Project | null> {
@@ -43,9 +38,9 @@ export class FzfWrapper {
       return `${p.name}\t${p.path}\t${meta}\t${p.id}`;
     }).join('\n');
 
-    // Build fzf command
+    // Build fzf command args
     const args = [
-      '--delimiter', '\\t',
+      '--delimiter', '\t',
       '--with-nth', '1,3',
       '--ansi',
       '--prompt', options.prompt || 'Select project> ',
@@ -56,20 +51,35 @@ export class FzfWrapper {
       '--exit-0'
     ];
 
-    try {
-      const result = execSync(`echo "${lines.replace(/"/g, '\\"')}" | fzf ${args.join(' ')}`, {
-        encoding: 'utf-8',
-        stdio: ['pipe', 'pipe', 'ignore']
+    return new Promise((resolve) => {
+      const fzf = spawn('fzf', args, {
+        stdio: ['pipe', 'pipe', process.stderr]
       });
 
-      const selectedLine = result.trim();
-      const selectedId = selectedLine.split('\t')[3];
+      let output = '';
 
-      return projects.find(p => p.id === selectedId) || null;
-    } catch (error) {
-      // User cancelled (fzf exits with non-zero)
-      return null;
-    }
+      fzf.stdout.on('data', (data) => {
+        output += data.toString();
+      });
+
+      fzf.on('close', (code) => {
+        if (code === 0 && output.trim()) {
+          const selectedId = output.trim().split('\t')[3];
+          const project = projects.find(p => p.id === selectedId);
+          resolve(project || null);
+        } else {
+          resolve(null);
+        }
+      });
+
+      fzf.on('error', () => {
+        resolve(null);
+      });
+
+      // Write input to fzf
+      fzf.stdin.write(lines);
+      fzf.stdin.end();
+    });
   }
 
   async selectMultiple(projects: Project[], options: FzfOptions = {}): Promise<Project[]> {
@@ -89,7 +99,7 @@ export class FzfWrapper {
     }).join('\n');
 
     const args = [
-      '--delimiter', '\\t',
+      '--delimiter', '\t',
       '--with-nth', '1,3',
       '--ansi',
       '--prompt', options.prompt || 'Select projects> ',
@@ -99,18 +109,34 @@ export class FzfWrapper {
       '--preview-window', 'down:3:noborder'
     ];
 
-    try {
-      const result = execSync(`echo "${lines.replace(/"/g, '\\"')}" | fzf ${args.join(' ')}`, {
-        encoding: 'utf-8',
-        stdio: ['pipe', 'pipe', 'ignore']
+    return new Promise((resolve) => {
+      const fzf = spawn('fzf', args, {
+        stdio: ['pipe', 'pipe', process.stderr]
       });
 
-      const selectedLines = result.trim().split('\n').filter(Boolean);
-      const selectedIds = selectedLines.map(line => line.split('\t')[3]);
+      let output = '';
 
-      return projects.filter(p => selectedIds.includes(p.id));
-    } catch {
-      return [];
-    }
+      fzf.stdout.on('data', (data) => {
+        output += data.toString();
+      });
+
+      fzf.on('close', (code) => {
+        if (code === 0 && output.trim()) {
+          const selectedLines = output.trim().split('\n').filter(Boolean);
+          const selectedIds = selectedLines.map(line => line.split('\t')[3]);
+          resolve(projects.filter(p => selectedIds.includes(p.id)));
+        } else {
+          resolve([]);
+        }
+      });
+
+      fzf.on('error', () => {
+        resolve([]);
+      });
+
+      // Write input to fzf
+      fzf.stdin.write(lines);
+      fzf.stdin.end();
+    });
   }
 }
