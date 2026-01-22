@@ -84,4 +84,11 @@ export class ConfigManager {
       .sort((a, b) => b.lastAccessed - a.lastAccessed)
       .slice(0, limit);
   }
+
+  async setProjects(projects: Project[]): Promise<void> {
+    if (!this.config) await this.load();
+    if (!this.config) throw new Error('Failed to load config');
+    this.config.projects = projects;
+    await this.save();
+  }
 }
